@@ -1,5 +1,5 @@
 package Tatooine::DB;
-use base qw / Tatooine /;
+use base qw / Tatooine::Base /;
 
 =nd
 Package: Tatooine::DB
@@ -14,8 +14,6 @@ use utf8;
 use Tatooine::Error;
 use DBI;
 
-use parent qw(Tatooine);
-
 =nd
 Method: new
 	Конструктор. Создает объект модуля.
@@ -29,11 +27,11 @@ sub new {
 	# Заполняем поля объекта
 	my %attr = %{$attr_child};
 	$attr{db} = {
-		database => Tatooine::C->{db}{name},	# Имя базы данных
-		host	=> Tatooine::C->{db}{host},	# Хост
-		port	=> Tatooine::C->{db}{port},	# Порт
-		login	=> Tatooine::C->{db}{login},	# Имя пользователя БД
-		pass	=> Tatooine::C->{db}{pass},	# Пароль БД
+		database => Tatooine::Base::C->{db}{name},	# Имя базы данных
+		host	=> Tatooine::Base::C->{db}{host},	# Хост
+		port	=> Tatooine::Base::C->{db}{port},	# Порт
+		login	=> Tatooine::Base::C->{db}{login},	# Имя пользователя БД
+		pass	=> Tatooine::Base::C->{db}{pass},	# Пароль БД
 		%{$attr_child->{db}}
 	};
 

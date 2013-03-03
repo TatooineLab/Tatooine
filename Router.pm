@@ -1,5 +1,5 @@
 package Tatooine::Router;
-use base qw / Tatooine /;
+use base qw /Tatooine::Base/;
 
 =nd
 Package: Tatooine::Router
@@ -122,7 +122,7 @@ Method: setTpl($name_tpl)
 sub setPubTpl {
 	my ($self, $tpl) = @_;
 	#Выставляем шаблон, данные беруться из конфига
-	$self->{template} = Tatooine::T->{public}{$tpl};
+	$self->{template} = Tatooine::Base::T->{public}{$tpl};
 }
 
 =nd
@@ -132,7 +132,7 @@ Method: setAdmTpl($name_tpl)
 sub setAdmTpl {
 	my ($self, $tpl) = @_;
 	#Выставляем шаблон, данные беруться из конфига
-	$self->{template} = Tatooine::T->{admin}{$tpl};
+	$self->{template} = Tatooine::Base::T->{admin}{$tpl};
 }
 
 =nd
@@ -142,7 +142,7 @@ Method: setSystemTpl($name_tpl)
 sub setSystemTpl {
 	my ($self, $tpl) = @_;
 	#Выставляем шаблон, данные беруться из конфига
-	$self->{template} = Tatooine::T->{system}{$tpl};
+	$self->{template} = Tatooine::Base::T->{system}{$tpl};
 }
 
 =nd

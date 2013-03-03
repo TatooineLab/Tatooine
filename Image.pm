@@ -1,6 +1,5 @@
-package Image;
+package Tatooine::Image;
 
-$VERSION = 12.11.13;
 
 =nd
 Package: Image

@@ -1,5 +1,4 @@
-package GA::File;
-$VERSION = 12.12.04;
+package Tatooine::File;
 
 =nd
 Package: File
@@ -10,8 +9,8 @@ Package: File
 use strict;
 use warnings;
 
-use GA;			# Базовый класс для работы с базой
-use GA::Error;		# Модуль для работы с ошибками
+use Tatooine::Base;			# Базовый класс для работы с базой
+use Tatooine::Error;		# Модуль для работы с ошибками
 use JSON;		# модуль для формирования с JSON данными
 
 =nd

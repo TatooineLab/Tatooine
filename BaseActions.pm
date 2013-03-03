@@ -1,5 +1,4 @@
 package Tatooine::BaseActions;
-$VERSION = 13.02.28;
 
 =nd
 Package: BaseActions

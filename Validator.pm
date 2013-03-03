@@ -1,5 +1,4 @@
 package Tatooine::Validator;
-$VERSION = 12.08.16.1;
 
 =nd
 Package: Validator

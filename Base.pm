@@ -1,8 +1,8 @@
-package Tatooine;
+package Tatooine::Base;
 
 =nd
-Package: Tatooine
-	Родительский модуль модуль проекта
+Package: Tatooine::Base
+	Базовый класс проекта
 =cut
 
 use strict;

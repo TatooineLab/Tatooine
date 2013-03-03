@@ -1,5 +1,4 @@
-package GA::SendMail;
-$VERSION = 0.2;
+package Tatooine::SendMail;
 
 =nd
 Package: SendRequest
