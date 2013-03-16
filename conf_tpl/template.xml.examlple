@@ -3,7 +3,7 @@
 <templates>
 	<!-- Системные шаблоны -->
 	<system>
-		<JSON>system/json.tpl</JSON>
+		<TEST>system/test.tpl</TEST>
 	</system>
 
 	<!-- Публичные шаблоны -->
@@ -15,21 +15,8 @@
 	<admin>
 		<MAIN>admin/main.tpl</MAIN>
 
-		<ADM_CATALOG_CATEGORY>admin/catalog/category/main.tpl</ADM_CATALOG_CATEGORY>
-		<ADM_CATALOG_CATEGORY_FORM>admin/catalog/category/form.tpl</ADM_CATALOG_CATEGORY_FORM>
-		<ADM_CATALOG_CATEGORY_CONTENT>admin/catalog/category/content.tpl</ADM_CATALOG_CATEGORY_CONTENT>
-
-		<catalog>
-			<product>
-				<MAIN>admin/catalog/product/main.tpl</MAIN>
-				<FORM>admin/catalog/product/form.tpl</FORM>
-				<CONTENT>admin/catalog/product/content.tpl</CONTENT>
-				<WND_DELETE>admin/catalog/product/wnd_delete.tpl</WND_DELETE>
-			</product>
-			<category>
-				<MAIN>admin/catalog/category/main.tpl</MAIN>
-				<FORM>admin/catalog/category/form.tpl</FORM>
-			</category>
-		</catalog>
+		<test_module>
+			<MAIN>admin/test_module/main.tpl</MAIN>
+		</test_module>
 	</admin>
 </templates>
