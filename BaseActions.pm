@@ -9,6 +9,8 @@ Package: BaseActions
 use strict;
 use warnings;
 
+use utf8;
+
 use JSON;			# модуль для работы с JSON
 use Tatooine::Error;		# Модуль для работы с ошибками
 
@@ -106,7 +108,7 @@ sub registerActions {
 				}
 
 				# Формируем сообщение
-				$S->F->{message} = "Запись успешно сохранена.";
+				$S->F->{message} = "Record is saved.";
 			}
 
 			# Преобразуем сообщение в JSON формат
@@ -140,7 +142,7 @@ sub registerActions {
 
 			# Формируем сообщение
 			$S->F->{message}{class} = 'success';
-			push @{$S->F->{message}{msg}}, "Запись успешно удалена.";
+			push @{$S->F->{message}{msg}}, "Record is deleted.";
 
 			# Преобразуем сообщение в JSON формат
 			$S->F->{data} = to_json( $S->F->{message}, {allow_nonref => 1} );

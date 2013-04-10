@@ -9,6 +9,8 @@ Package: File
 use strict;
 use warnings;
 
+use utf8;
+
 use Tatooine::Base;			# Базовый класс для работы с базой
 use Tatooine::Error;		# Модуль для работы с ошибками
 use JSON;		# модуль для формирования с JSON данными

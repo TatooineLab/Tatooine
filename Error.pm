@@ -8,6 +8,8 @@ Package: Error
 use strict;
 use warnings; 
 
+use utf8;
+
 use base qw(Exporter);
 our @EXPORT = qw(systemError userError checkErrors getErrors regUserErrors clearErrors);
 

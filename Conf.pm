@@ -9,6 +9,7 @@ Package: Tatooine::Config
 
 use strict;
 use warnings;
+
 use utf8;
 
 use Tatooine::Error;

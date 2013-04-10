@@ -9,6 +9,8 @@ Package: Image
 use strict;
 use warnings;
 
+use utf8;
+
 use Image::Magick; 	# модуль для обработки изображений
 use base qw(Object);	# базовый модуль для всех объектов
 use Error;		# модуль ошибок

@@ -8,6 +8,8 @@ Package: SendRequest
 use strict;
 use warnings;
 
+use utf8;
+
 use Net::SMTP;
 use MIME::Base64;
 use Encode;		# модуль для перекодирования строк

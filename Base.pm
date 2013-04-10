@@ -8,6 +8,8 @@ Package: Tatooine::Base
 use strict;
 use warnings;
 
+use utf8;
+
 use Tatooine::Conf;
 use Tatooine::Error;
 
