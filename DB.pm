@@ -185,6 +185,7 @@ sub getRecord {
 	# Разбираем WHERE
 	my (@bind_values, $where_fields, $order, @tmp);
 	foreach (keys %{$sql->{where}}) {
+		next unless $sql->{where}{$_};
 		# Полнотекстовый поиск
 		if ( ref $sql->{where}{$_} eq 'HASH' and $sql->{where}{$_}{tsearch} and $sql->{where}{$_}{sign} ){
 			my $val = join(' '.$sql->{where}{$_}{sign}.' ', split(' ', $sql->{where}{$_}{value}));
