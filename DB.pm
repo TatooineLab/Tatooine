@@ -1,25 +1,24 @@
 package Tatooine::DB;
-use base qw / Tatooine::Base /;
 
 =nd
 Package: Tatooine::DB
-	Класс для работы с базой данных
+	Class to work with the database.
 =cut
-
 
 use strict;
 use warnings;
 
 use utf8;
 
+use base qw / Tatooine::Base /;
+
 use Tatooine::Error;
 use DBI;
 
 =nd
 Method: new
-	Конструктор. Создает объект модуля.
+	The class constructor.
 =cut
-
 sub new {
 	my ($class, $attr_child) = @_;
 	# Проверяем атрибуты потоска
@@ -41,13 +40,14 @@ sub new {
 
 =nd
 Method: connectDB
-	Коннект к базе данных.
+	Connect to the database.
 =cut
-#Подключение к БД
 sub connectDB {
 	my $self = shift;
-	my $data_source = "dbi:Pg:database=$self->{db}{database};host=$self->{db}{host};port=$self->{db}{port}";
-	$self->R->{dbh} = DBI->connect($data_source, $self->{db}{login}, $self->{db}{pass}) or systemError('Can not connect to database');
+	if (!$self->R->dbh or !$self->R->dbh->ping) {
+		my $data_source = "dbi:Pg:database=$self->{db}{database};host=$self->{db}{host};port=$self->{db}{port}";
+		$self->R->{dbh} = DBI->connect($data_source, $self->{db}{login}, $self->{db}{pass}) or systemError('Can not connect to database');
+	}
 }
 
 =nd
@@ -61,7 +61,6 @@ Parameters:
 See Also:
 	update
 =cut
-
 sub insert {
 	my ($self, $fields, $table, $return) = @_;
 	#Чистим поток от прав пользователя
@@ -102,8 +101,6 @@ Parameters:
 	$where        	- какую именно запись нужно обновить (поле sql-запроса WHERE)
 	$table 		- название таблицы, в которую добавляют данные (по умолчанию берётся из модуля)
 =cut
-
-# Редактирование записи
 sub update {
 	my($self, $fields, $where, $table) = @_;
 	#Чистим поток от прав пользователя
@@ -135,7 +132,6 @@ Parameters:
 	$value       	- значение id. По умолчанию берётся из $self->{router}{flow}{id}
 	$table 		- название таблицы, в которую добавляют данные (по умолчанию берётся из модуля)
 =cut
-
 sub delete {
 	my ($self, $where, $table) = @_;
 	my (@bind_values, $where_fields, @tmp);
