@@ -323,7 +323,7 @@ sub getList {
 	$self->{list} = $self->getRecord(
 		{
 			fields => $options->{fields} || '*',
-			order => $options->{order} || 'sort' || 'id',
+			order => $options->{order} || $self->mO->{db}{default_order} || 'id',
 			where => $options->{where},
 			flow_type => $options->{flow_type} || 'hashref_array'
 		}

@@ -1,9 +1,8 @@
 package Tatooine::Image;
 
-
 =nd
 Package: Image
-	Модуль для работы с изображениями.
+	A class for working with images.
 =cut
 
 use strict;
@@ -11,35 +10,238 @@ use warnings;
 
 use utf8;
 
-use Image::Magick; 	# модуль для обработки изображений
-use base qw(Object);	# базовый модуль для всех объектов
-use Error;		# модуль ошибок
+use base qw / Tatooine::File /;
 
-my $img_table = 'image';
+use Image::Magick;		# ImageMagick is a software suite to create, edit, compose, or convert bitmap images.
+						# http://www.imagemagick.org/
+
+use Tatooine::Error;	# Class for handling errors.
+use JSON;
+
+=nd
+Method: registerImageActions
+	The method of recording actions for the module.
+=cut
+sub registerImageActions {
+	my $self = shift;
+	my $router = $self->{router};
+
+	# Главная страница
+	$router->registerAction($self->Prefix.'_IMAGE_MAIN' => { do => sub {
+			my $S = shift;
+
+			$self->mO->setImageTpl('MAIN');
+			return 'STOP';
+		}
+	});
+
+	# Вывод списка записей
+	$router->registerAction($self->Prefix.'_IMAGE_LIST' => { do => sub {
+			my $S = shift;
+			$self->mO->connectDB;
+
+			# Получаем список записей
+			$S->F->{image_list} = $self->mO->getImageList;
+
+			$self->mO->setImageTpl('LIST');
+			return 'STOP';
+		}
+	});
+
+	# Добавление/редактирование записи
+	$router->registerAction($self->Prefix.'_IMAGE_UPLOAD' => { do => sub {
+			my $S = shift;
+
+			# Загружаем файл на сервер
+ 			my $file_name = $self->mO->imageUpload;
+
+			# Формируем сообщение
+			$S->F->{message} = "The file was successfully uploaded.";
+
+			# Преобразуем сообщение в JSON формат
+			$S->F->{data} = to_json( $S->F->{message}, {allow_nonref => 1} );
+			$S->setSystemTpl('JSON');
+			return 'STOP';
+		}
+	});
+
+	# Форма добавления/редактирования записи
+	$router->registerAction($self->Prefix.'_IMAGE_FORM' => { do => sub {
+			my $S = shift;
+			$self->mO->connectDB;
+
+			# Если запись редактируется
+			if ($S->F->{id} and $S->F->{id} ne 'undefined'){
+				$S->F->{data} = $self->mO->getRecord({
+					where => {
+						id => $S->F->{id}
+					}
+				});
+			}
+
+			$self->mO->setImageTpl('FORM');
+			return 'STOP';
+		}
+	});
+
+	# Добавление/редактирование записи
+	$router->registerAction($self->Prefix.'_IMAGE_SAVE' => { do => sub {
+			my $S = shift;
+
+			# Проверяем введённые данные на корректность
+			$self->mO->validateData;
+			# Если присутствует ошибка, то завершаем скрипт
+			return 'STOP' if $S->F->{error};
+
+			## Вытаскиваем ошибки
+			my $errors = checkErrors('USER');
+			unless ($errors) {
+				$self->mO->connectDB;
+
+				# Получаем список параметров новой записи
+				my %fields = %{$S->F};
+				# Удаляем ненужные параметры
+				delete @fields{qw(id save)};
+
+				# Присваиваем значения undef пустым строкам
+				foreach my $key (keys %fields){
+					$fields{$key} = undef unless $fields{$key};
+				}
+
+				# Редактирование записи
+				if($S->F->{id}){
+					my %where_field = ('id' => $S->F->{id});
+					$self->mO->update(\%fields, \%where_field);
+				# Добавление записи
+				} else {
+					$self->mO->insert(\%fields);
+				}
+
+				# Формируем сообщение
+				$S->F->{message} = "Image is saved.";
+			}
+
+			# Преобразуем сообщение в JSON формат
+			$S->F->{data} = to_json( $S->F->{message}, {allow_nonref => 1} );
+			$S->setSystemTpl('JSON');
+			return 'STOP';
+		}
+	});
+
+	# Окно удаления записи
+	$router->registerAction($self->Prefix.'_IMAGE_WND_DELETE' => { do => sub {
+			my $S = shift;
+
+			$self->mO->setImageTpl('WND_DELETE');
+			return 'STOP';
+		}
+	});
+
+	# Удалить запись
+	$router->registerAction($self->Prefix.'_IMAGE_DELETE' => { do => sub {
+			my $S = shift;
+			$self->connectDB;
+
+			if ($self->R->F->{id}){
+				# Get image info
+				my $img = $self->getRecord({
+					table => $self->tableImage,
+					where => {
+						id => $self->R->F->{id}
+					}
+				});
+
+				# Delete record from database
+				$self->delete({ id => $self->R->F->{id} }, $self->tableImage);
+
+				# Delete image from path
+				$self->mO->imageDelete({
+					id => $img->{id},
+					id_record => $img->{id_record},
+					path => $self->filePath
+				}) if $img;
+
+				# Формируем сообщение
+				$S->F->{message}{class} = 'success';
+				push @{$S->F->{message}{msg}}, "Image is deleted.";
+			} else {
+				# Формируем сообщение
+				$S->F->{message}{class} = 'error';
+				push @{$S->F->{message}{msg}}, "Error. Image is not deleted.";
+			}
+
+			# Преобразуем сообщение в JSON формат
+			$S->F->{data} = to_json( $S->F->{message}, {allow_nonref => 1} );
+			$S->setSystemTpl('JSON');
+			return 'STOP';
+		}
+	});
+}
+
+=nd
+Method: selectActions
+	Метод для выбора действий в зависимости от пришедших параметров
+
+=cut
+sub selectImageActions {
+	my $self = shift;
+	my $R = $self->{router};
+	my @act;
+
+	push @act, $self->Prefix.'_IMAGE_MAIN'			if $R->F->{image_main};
+	push @act, $self->Prefix.'_IMAGE_UPLOAD'		if $R->F->{image_upload};
+	push @act, $self->Prefix.'_IMAGE_LIST'			if $R->F->{image_list};
+	push @act, $self->Prefix.'_IMAGE_WND_DELETE' 	if $R->F->{image_wnd_delete};
+	push @act, $self->Prefix.'_IMAGE_DELETE' 		if $R->F->{image_delete};
+
+	push @act, $self->Prefix.'_IMAGE_FORM'			if $R->F->{image_form};
+	push @act, $self->Prefix.'_IMAGE_SAVE'			if $R->F->{image_save};
+
+	return @act;
+}
+
+=nd
+Method: setImageTpl($name_tpl)
+	The method that sets the template.
+
+Parameters:
+	$name_tpl - template name
+=cut
+sub setImageTpl {
+	my ($self, $name_tpl) = @_;
+	# Set the template, the data are taken from the config file
+	$self->R->{template} = $self->T->{system}{image}{$name_tpl};
+}
+
+=nd
+Method: tableImage
+	The method of access to the name of the table you are working on a module.
+=cut
+sub tableImage { shift->{db}{image_table} }
 
 =nd
 Method: getImageList
-	Список изображений для записи
+	The method for getting the image list from database.
 
 Parameters:
-	$opt - хеш с параметрами
+	$opt - hash with parameters
 =cut
 sub getImageList {
 	my ($self, $opt) = @_;
 	$opt = {} unless $opt;
 
 	# Идентификатор записи, для которой достаются картинки
-	my $id = $opt->{id_record} || $self->S->F->{id};
+	my $id = $opt->{id_record} || $self->R->F->{id};
 	# Таблица, в которой находится запись
 	my $table = $opt->{table} || $self->table;
 
-	# Если нет подключения к базе, то коннектимся
-	if (!$self->S->dbh or !$self->S->dbh->ping) {
-		$self->S->connectDB;
-	}
+	$self->connectDB;
+
+	# Путь к файлам
+	$self->R->F->{path} = $self->{file}{path};
 
 	$self->getRecord({
-			table => $img_table,
+			table => $self->tableImage,
 			where => {
 				id_record => $id,
 				tbl => $table
@@ -49,100 +251,97 @@ sub getImageList {
 }
 
 =nd
-Method: uploadImage
-	Загружает картинку на сервер.
+Method: imageUpload
+	The method for uploading image to a server.
 
 Parameters:
-	$opt->{file}		- исходный файл
-	$opt->{id_record}	- id записи, для которой грузится файл
-	$opt->{table}		- имя таблицы, для которой загружается изображение
-	$opt->{path}		- путь к папке,в которую будет загружен файл
+	$opt->{file}		- source file
+	$opt->{id_record}	- The ID of the record for which the file is uploaded.
+	$opt->{table}		- Name of the table on which an image is uploaded.
+	$opt->{path}		- The path to the folder in which the file will be uploaded.
 =cut
-sub uploadImage {
+sub imageUpload {
 	my ($self, $opt) = @_;
 	$opt = {} unless $opt;
 
 	$opt->{table} = $self->table unless $opt->{table};
 	$opt->{path} = $self->filePath unless $opt->{path};
 	$opt->{sort} = 0 unless $opt->{sort};
+	$opt->{id_record} = $self->R->F->{id_record} unless $opt->{id_record};
 
-	# выделяем имя файла из параметра
-	my ($name) = $opt->{file} =~ m#([^\\/:]+)$#;
+	# File name
+	my $name = $self->R->F->{'_pictures'};
 
-	# Получаем расширение картинки
+	# File extension
 	my $ext = $name;
 	$ext =~ s/.*((png)|(gif)|(jpg))$/$1/gi;
 
-	# Имя загруженного файла
+	# The name of the uploaded file
 	my $fname;
 
-	# Если расширение соответствует заданным
+	# If the extension matches the specified png, gif, jpg
 	if ($ext ne $name) {
-		# Если нет подключения к базе, то коннектимся
-		if (!$self->S->dbh or !$self->S->dbh->ping) {
-			$self->S->connectDB;
-		}
+		$self->connectDB;
 
+		# Source file
+		$opt->{file} = $self->R->F->{pictures};
 
-		# Добавляем информацию о файле в базу
-		my $id = $self->addRecord(
+		# Add image info to a database
+		my $id = $self->insert(
 			{
 				id_record => $opt->{id_record},
 				tbl => $opt->{table},
 				ext => $ext,
-				sort => $opt->{sort}
+				sort => $opt->{sort},
+				file_size => -s $opt->{file}
 			},
-			$img_table,
+			$self->tableImage,
 			'id'
 		);
 
-		# Имя файла
-		$fname = $opt->{id_record}.'_'.$id;
+		# The name of the uploaded file
+		$opt->{name} = $opt->{id_record}.'_'.$id;
 
-		# Загружаем файл на сервер
-		$self->uploadFile($opt->{file}, $fname, $opt->{path});
+		# Upload the file to the server
+		$fname = $self->uploadFile($opt);
+
+		# Get image sizes from database
+		my $size = $self->getRecord({
+			table => 'image_setting',
+			flow_type => 'hashref_array'
+		});
+
+		# Resize images
+		foreach my $i (@{$size}) {
+			$self->resizeImage({
+				picname => $fname,
+				size => {
+					width => $i->{width},
+					height => $i->{height}
+				}
+			});
+		}
 	}
 
+	# The full name of the uploaded file
 	return $fname.'.'.$ext;
 }
 
 =nd
-Method: deleteImage
-	Метод, который удаляет картинку
+Method: imageDelete
+	A method which removes the image from the database and the server.
 
 Parameters:
-	$opt->{name}		- название файла
 	$opt->{id_record}	- id записи, у которой удаляется файл
-	$opt->{id}		- id файла в таблице image
-	$opt->{path}		- путь к папке,в которую будет загружен файл
+	$opt->{id}			- id файла в таблице image
+	$opt->{path}		- путь к папке, в которой лежит файл
 =cut
-sub deleteImage {
+sub imageDelete {
 	my ($self, $opt) = @_;
-	$opt = {} unless $opt;
-
-	## Значения по умолчанию
-	if ($opt->{name}) {
-		$opt->{name} =~  /^((\d+)_(\d+))/;
-		$opt->{id} = $3 unless $opt->{id};
-		$opt->{id_record} = $2 unless $opt->{id_record};
-	}
-	$opt->{path} = $self->filePath unless $opt->{path};
-
-	# Если нет подключения к базе, то коннектимся
-	if (!$self->S->dbh or !$self->S->dbh->ping) {
-		$self->S->connectDB;
-	}
-
-	# Удаляем запись из базы
-	if ($opt->{id}){
-		$self->deleteRecord({ id => $opt->{id} }, $img_table);
-	# Удаление всех записей
-	} else {
-		$self->deleteRecord({ id_record => $opt->{id_record} }, $img_table);
-	}
+	return unless $opt;
 
 	# Удаляем файлы из каталога
-	my $fname = $opt->{id} ? $opt->{id_record}.'_'.$opt->{id} : $opt->{id_record};
+	my $fname = $opt->{id_record}.'_'.$opt->{id};
 	my $path = $opt->{path};
 	`rm "$path${fname}."*`;
 	`rm "$path${fname}_"*`;
@@ -150,73 +349,37 @@ sub deleteImage {
 
 =nd
 Method: resizeImage
-	Изменяет размер изображения.
+	Изменяет размер изображения до заданного размера
 
 Parameters:
-	$picname  -	имя файла изображения, которую нужно изменить.
-	$path 	  -	путь к папке, в которой лежит изображение. По умолчанию берётся из функции filePath.
+	$opt->{picname}	-	имя файла изображения, которое нужно изменить.
+	$opt->{path}	-	путь к папке, в которой лежит изображение. По умолчанию берётся из функции filePath.
+	$opt->{size}	-	хеш, который хранит размеры изображения
 
 See Also:
 	filePath
 =cut
 sub resizeImage {
 	# Получаем входные данные.
-	my ($self, $picname, $path) = @_;
-	my ($image, $x);
-	# Cоздаём объект для работы с изображением
-	$image = Image::Magick->new;
-	# Открываем файл
-	$x = $image->Read($path.$picname);
-	# определяем ширину и высоту изображения
-	my ($ox,$oy) = $image->Get('base-columns','base-rows');
-	# Если изображение прямоугольное горизонтальное
-	if($ox>$oy){
-		# Вычисляем откуда нам резать
-		my $nnx=int(($ox-$oy)/2);
-		# Задаем откуда будем резать
-		$image->Crop(x=>$nnx, y=>0);
-		# С того места вырезаем квадрат
-		$image->Crop($oy.'x'.$oy);
-	# Если изображение прямоугольное вертикальное, либо квадратное
-	} else {
-		my $nny=int(($oy-$ox)/2);
-		#Задаем откуда будем резать
-		$image->Crop(x=>0, y=>$nny);
-		#С того места вырезаем квадрат
-		$image->Crop($ox.'x'.$ox);
-	}
-	# Делаем resize (изменения размера)
-	$image->Resize(width=>170, height=>170);
-	# Сохраняем изображение.
-	$x = $image->Write($path.$picname);
-}
+	my ($self, $opt) = @_;
+	my ($image, $x, $picname, $path, $size, $param);
 
+	$picname = $opt->{picname};
+	$path = $opt->{path} || $self->filePath;
+	$size = $opt->{size};
+	$param = $opt->{param};
 
-=nd
-Method: resizeImageSize
-	Изменяет размер изображения до заданного размера
-
-Parameters:
-	$picname  -	имя файла изображения, которое нужно изменить.
-	$path 	  -	путь к папке, в которой лежит изображение. По умолчанию берётся из функции filePath.
-	$size	  -	хеш, который хранит размеры изображения
-
-See Also:
-	filePath
-=cut
-sub resizeImageSize {
-	# Получаем входные данные.
-	my ($self, $picname, $path, $size, $param) = @_;
-	my ($image, $x);
-
-	# Получаем расширение файла
+	# File extension
 	my $ext=$picname;
 	$ext =~s /.*((png)|(gif)|(jpg))$/$1/gi;
-	# Получаем имя файла
+
+	# File name
 	my $fname = $picname;
 	$fname =~ s/.$ext//;
-	# Cоздаём объект для работы с изображением
+
+	# Create an object for working with images
 	$image = Image::Magick->new;
+
 	# Открываем файл
 	$x = $image->Read($path.$picname);
 	# определяем ширину и высоту изображения
@@ -332,10 +495,9 @@ sub addWatermark {
 	$img->Read( $path.$fname."_".$size->{width}."x".$size->{height}.".".$ext );
 	$layer->Read( $ENV{DOCUMENT_ROOT}.'/img/watermark/watermark_'.$size->{width}.'x'.$size->{height}.'.png');
 
-	warn $path.$fname."_".$size->{width}."x".$size->{height}.".".$ext;
-	warn $ENV{DOCUMENT_ROOT}.'/img/watermark/watermark_'.$size->{width}.'x'.$size->{height}.'.png';
-
 	$img->Composite(image=>$layer,compose=>'Atop', x=>0, y=>0);
 
 	$img->Write( $path.$fname."_".$size->{width}."x".$size->{height}.".".$ext );
 }
+
+1;
