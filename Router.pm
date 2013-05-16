@@ -108,13 +108,16 @@ Method: out
 sub out {
 	my $self = shift;
 	print "Content-type: text/html; charset=UTF-8\n\n";
-	my $tt = Template->new({
-		INCLUDE_PATH => "$ENV{ DOCUMENT_ROOT }/../template/",
-		INTERPOLATE  => 0,
-		RELATIVE => 1,
-	#	RECURSION =>1,
-	});
-	$tt->process($self->{template}, $self->F) or systemError('Template not found');
+	# Если шаблон задан, выставляем его.
+	if ($self->{template}) {	
+		my $tt = Template->new({
+			INCLUDE_PATH => "$ENV{ DOCUMENT_ROOT }/../template/",
+			INTERPOLATE  => 0,
+			RELATIVE => 1,
+		#	RECURSION =>1,
+		});
+		$tt->process($self->{template}, $self->F) or systemError('Template not found');
+	}
 };
 
 =nd
