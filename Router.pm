@@ -77,13 +77,13 @@ sub listen {
 # 	$self->R(new CGI);
 	#Вытаскиваем CGI
 #	$self->{flow}{$_} = $self->R->param($_) foreach $self->R->param;
-	while ($self->R(CGI::Fast->new)) {
+	while ($self->CGI(CGI::Fast->new)) {
 		$CGI::PARAM_UTF8 = 1;
-		for my $name ($self->R->param) {
+		for my $name ($self->CGI->param) {
 			if($name =~ /arr/) {
-				push @{$self->{flow}{$name}}, $self->R->param($name);
+				push @{$self->{flow}{$name}}, $self->CGI->param($name);
 			} else {
-				$self->{flow}{$name} = $self->R->param($name)
+				$self->{flow}{$name} = $self->CGI->param($name)
 			}
 		}
 		#Получаем имя действие(я) которое(ые) нужно выполнить
@@ -151,13 +151,13 @@ sub setSystemTpl {
 }
 
 =nd
-Method: R
+Method: CGI
 	Метод доступа к данным структуры объекта. Доступ к полю cgi
 
 See Also:
 	RA
 =cut
-sub R {
+sub CGI {
 	my $self = shift;
 	if (@_) { $self->{cgi} = shift }
 	$self->{cgi};
@@ -168,7 +168,7 @@ Method: RA($name_action)
 	Метод доступа к данным структуры объекта. Доступ на выполнение действия.
 
 See Also:
-	R
+	CGI
 =cut
 sub RA {
 	my ($self, $name) = @_;
@@ -181,7 +181,7 @@ Method: F
 	Метод доступа к потоку вывода сервера
 
 See Also:
-	R RA
+	CGI RA
 =cut
 sub F { shift->{flow} }
 
