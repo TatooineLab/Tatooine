@@ -179,100 +179,22 @@ sub getRecord {
 	$sql->{table} = $self->table unless $sql->{table};
 
 	## Подготавливаем запрос
-	# Разбираем WHERE
-	my (@bind_values, $where_fields, $order, @tmp);
-	foreach (keys %{$sql->{where}}) {
-		next unless exists($sql->{where}{$_});
-		# Полнотекстовый поиск
-		if ( ref $sql->{where}{$_} eq 'HASH' and $sql->{where}{$_}{tsearch} and $sql->{where}{$_}{sign} ){
-			my $val = join(' '.$sql->{where}{$_}{sign}.' ', split(' ', $sql->{where}{$_}{value}));
-			my $key = $_;
-			# Если присутствует поле key в хеше, то заменяем текущий ключ
-			$key = $sql->{where}{$_}{key} if $sql->{where}{$_}{key};
-			# Объединение
-			if (@tmp > 0) {
-				if ($sql->{where}{$_}{union}) {
-					push @tmp, $sql->{where}{$_}{union};
-				} else {
-					push @tmp, 'AND';
-				}
-			}
-			push @tmp, "to_tsvector('english', ".$key.") @@ to_tsquery(?)" ;
-			push @bind_values, $val;
-		# Если переменная имеет параметр value
-		} elsif ( ref $sql->{where}{$_} eq 'HASH' and ($sql->{where}{$_}{value} or $sql->{where}{$_}{value} == 0 or $sql->{where}{$_}{sign})){
-			my $sign = $sql->{where}{$_}{sign};
-			$sign = '=' unless $sign;
-			my $val = $sql->{where}{$_}{value};
-			my $key = $_;
-			# Если присутствует поле key в хеше, то заменяем текущий ключ
-			$key = $sql->{where}{$_}{key} if $sql->{where}{$_}{key};
+	my ($where_fields, @bind_values) = _serializeCondition($sql, 'where');
+	my ($having_fields, @bind_values_having) = _serializeCondition($sql, 'having');
+	push @bind_values, @bind_values_having;
 
-			if (@tmp > 0) {
-				push @tmp, 'AND';
-			}
-
-			# Операторы IN и NOT IN
-			if ($sign eq 'NOT IN' or $sign eq 'IN'){
-				# Формируем текст параметра запроса (ex. NOT IN (?, ?, ?))
-				my $str = $key." ".$sign." (";
-				# Количество ? соответствует количеству значений $val
-				foreach my $i (@{$val}) {
-					$str .= ($i ne $$val[-1]) ? '?,' : '?';
-				}
-				$str .= ')';
-
-				push @tmp, $str;
-				push @bind_values, @{$val};
-			# Объединение
-			} elsif ( ref $val eq 'ARRAY' ) {
-				push @tmp, '(';
-				my $n = 0;
-				foreach my $i (@{$val}) {
-					if ($n > 0) {
-						push @tmp, $sql->{where}{$_}{union};
-					}
-
-					my $k = $i->{key};
-					my $v = $i->{val};
-					my $s = $i->{sign} ? $i->{sign} : '=';
-					if ($v eq 'IS NULL' or $v eq 'IS NOT NULL') {
-						push @tmp, $k." ".$v;
-					} else {
-						push @tmp, $k." ".$s." ?";
-						push @bind_values, $v;
-					}
-
-					$n++;
-				}
-				push @tmp, ')';
-			} else {
-				if ($val eq 'IS NULL' or $val eq 'IS NOT NULL') {
-					push @tmp, $key." ".$val;
-				} else {
-					push @tmp, $key." ".$sign." ?" ;
-					push @bind_values, $val;
-				}
-			}
-		} elsif ($sql->{where}{$_} and $sql->{where}{$_} eq 'IS NULL' or $sql->{where}{$_} eq 'IS NOT NULL') {
-			push @tmp, 'AND' if @tmp > 0;
-			push @tmp, "$_ ".$sql->{where}{$_};
-		} else {
-			push @tmp, 'AND' if @tmp > 0;
-			push @tmp, "$_=?" ;
-			push @bind_values, $sql->{where}{$_};
-		}
-	}
-	$where_fields = join(' ', @tmp);
-	$where_fields = ' WHERE '.$where_fields	if($where_fields);
 	# sql-запрос
 	my $query = qq{ SELECT $sql->{fields} FROM $sql->{table} $where_fields};
 
 	# Добавляем ORDER
 	$query .= ' ORDER BY '.$sql->{order}	if ($sql->{order});
 	# Добавляем LIMIT
-	$query .= ' LIMIT '.$sql->{limit}	if ($sql->{limit});
-
+	$query .= ' LIMIT '.$sql->{limit}		if ($sql->{limit});
+	# Добавляем GROUP BY
+	$query .= ' GROUP BY '.$sql->{group_by}	if ($sql->{group_by});
+	# Добавляем HAVING
+	$query .= ' '.$having_fields;
+	
 	my $sth = $self->{router}{dbh}->prepare($query);
 	# Выполняем запрос
 	$sth->execute(@bind_values) or systemError("can't execute $query");
@@ -302,6 +224,106 @@ sub getRecord {
 	}
 }
 
+=nd
+Method: _serializeCondition($sql, field)
+	Сериализация условия sql-запроса
+Parameters:
+	$sql       	- структура sql-запроса
+	$field 		- поле условия
+=cut
+
+sub _serializeCondition {
+	my ($sql, $field) = @_;
+	# Разбираем WHERE
+	my (@bind_values, $where_fields, $order, @tmp);
+	foreach (keys %{$sql->{$field}}) {
+		next unless exists($sql->{$field}{$_});
+		# Полнотекстовый поиск
+		if ( ref $sql->{$field}{$_} eq 'HASH' and $sql->{$field}{$_}{tsearch} and $sql->{$field}{$_}{sign} ){
+			my $val = join(' '.$sql->{$field}{$_}{sign}.' ', split(' ', $sql->{$field}{$_}{value}));
+			my $key = $_;
+			# Если присутствует поле key в хеше, то заменяем текущий ключ
+			$key = $sql->{$field}{$_}{key} if $sql->{$field}{$_}{key};
+			# Объединение
+			if (@tmp > 0) {
+				if ($sql->{$field}{$_}{union}) {
+					push @tmp, $sql->{$field}{$_}{union};
+				} else {
+					push @tmp, 'AND';
+				}
+			}
+			push @tmp, "to_tsvector('english', ".$key.") @@ to_tsquery(?)" ;
+			push @bind_values, $val;
+		# Если переменная имеет параметр value
+		} elsif ( ref $sql->{$field}{$_} eq 'HASH' and ($sql->{$field}{$_}{value} or $sql->{$field}{$_}{value} == 0 or $sql->{$field}{$_}{sign})){
+			my $sign = $sql->{$field}{$_}{sign};
+			$sign = '=' unless $sign;
+			my $val = $sql->{$field}{$_}{value};
+			my $key = $_;
+			# Если присутствует поле key в хеше, то заменяем текущий ключ
+			$key = $sql->{$field}{$_}{key} if $sql->{$field}{$_}{key};
+
+			if (@tmp > 0) {
+				push @tmp, 'AND';
+			}
+
+			# Операторы IN и NOT IN
+			if ($sign eq 'NOT IN' or $sign eq 'IN'){
+				# Формируем текст параметра запроса (ex. NOT IN (?, ?, ?))
+				my $str = $key." ".$sign." (";
+				# Количество ? соответствует количеству значений $val
+				foreach my $i (@{$val}) {
+					$str .= ($i ne $$val[-1]) ? '?,' : '?';
+				}
+				$str .= ')';
+
+				push @tmp, $str;
+				push @bind_values, @{$val};
+			# Объединение
+			} elsif ( ref $val eq 'ARRAY' ) {
+				push @tmp, '(';
+				my $n = 0;
+				foreach my $i (@{$val}) {
+					if ($n > 0) {
+						push @tmp, $sql->{$field}{$_}{union};
+					}
+
+					my $k = $i->{key};
+					my $v = $i->{val};
+					my $s = $i->{sign} ? $i->{sign} : '=';
+					if ($v eq 'IS NULL' or $v eq 'IS NOT NULL') {
+						push @tmp, $k." ".$v;
+					} else {
+						push @tmp, $k." ".$s." ?";
+						push @bind_values, $v;
+					}
+
+					$n++;
+				}
+				push @tmp, ')';
+			} else {
+				if ($val eq 'IS NULL' or $val eq 'IS NOT NULL') {
+					push @tmp, $key." ".$val;
+				} else {
+					push @tmp, $key." ".$sign." ?" ;
+					push @bind_values, $val;
+				}
+			}
+		} elsif ($sql->{$field}{$_} and $sql->{$field}{$_} eq 'IS NULL' or $sql->{$field}{$_} eq 'IS NOT NULL') {
+			push @tmp, 'AND' if @tmp > 0;
+			push @tmp, "$_ ".$sql->{$field}{$_};
+		} else {
+			push @tmp, 'AND' if @tmp > 0;
+			push @tmp, "$_=?" ;
+			push @bind_values, $sql->{$field}{$_};
+		}
+	}
+	
+	$where_fields = join(' ', @tmp);
+	$where_fields = $field.' '.$where_fields	if($where_fields);
+	
+	return $where_fields, @bind_values;
+}
 =nd
 Function: getList
 	Процедура получения списка записей
