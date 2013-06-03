@@ -104,13 +104,13 @@ Parameters:
 sub update {
 	my($self, $fields, $where, $table) = @_;
 
+	# Подготавливаем структуру для разбора
 	my $sql = {
 		fields	=> $fields,
 		where	=> $where,
 		table	=> $table
 	};
 
-	##Подготовка sql запроса
 	#Биндим значения
 	my @bind_values;
 	push @bind_values, $_ foreach values %{$fields};
@@ -127,7 +127,6 @@ sub update {
 	# Вытаскиваем таблицу
 	$table = $self->table if (!$table);
 	my $query = qq{UPDATE $table SET $fields_str $where_fields};
-	warn $query;
 	#Обновляем запись
 	$self->{router}{dbh}->do($query, undef, @bind_values) or systemError("can't execute $query");
 }
