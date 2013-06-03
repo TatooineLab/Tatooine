@@ -103,15 +103,22 @@ Parameters:
 =cut
 sub update {
 	my($self, $fields, $where, $table) = @_;
-	#Чистим поток от прав пользователя
-	delete $fields->{roles};
+
+	my $sql = {
+		fields	=> $fields,
+		where	=> $where,
+		table	=> $table
+	};
+
 	##Подготовка sql запроса
 	#Биндим значения
 	my @bind_values;
 	push @bind_values, $_ foreach values %{$fields};
-	my ($where_fields, @tmp);
-	push @tmp, "$_='$where->{$_}'" foreach keys %{$where};
-	$where_fields = join(' AND ', @tmp);
+
+	## Подготавливаем запрос
+	my ($where_fields, @bind_values_where) = _serializeCondition($sql, 'where');
+	push @bind_values, @bind_values_where;
+
 	#Поля для запроса(добавляем плэйхолдеры)
 	my ($fields_str, @work_fields);
 	$fields_str .= " ".$_."=?," foreach keys %{$fields};
@@ -119,8 +126,8 @@ sub update {
 	chop($fields_str);
 	# Вытаскиваем таблицу
 	$table = $self->table if (!$table);
-	my $query = qq{UPDATE $table SET $fields_str WHERE $where_fields};
-
+	my $query = qq{UPDATE $table SET $fields_str $where_fields};
+	warn $query;
 	#Обновляем запись
 	$self->{router}{dbh}->do($query, undef, @bind_values) or systemError("can't execute $query");
 }
@@ -231,7 +238,6 @@ Parameters:
 	$sql       	- структура sql-запроса
 	$field 		- поле условия
 =cut
-
 sub _serializeCondition {
 	my ($sql, $field) = @_;
 	# Разбираем WHERE
