@@ -25,15 +25,18 @@ Constant: CONFPATH
 use constant {
 	CONFPATH => $INC[0].'/../conf/global.xml',
 	TEMPLATEPATH => $INC[0].'/../conf/template.xml',
+	MESSAGEPATH => $INC[0].'/../conf/message.xml',
 };
 
-use vars qw/ $DATA $TPL /;
+use vars qw/ $DATA $TPL $MESSAGE /;
 
 # Читаем данные из конфига
 my $simple = XML::Simple->new();
 # Получаем данные глобального конфига
 $DATA = $simple->XMLin(CONFPATH) or systemErorr('Template config file does not exist');
-# Получаем конфига шаблонов
+# Получаем данные конфига шаблонов
 $TPL = $simple->XMLin(TEMPLATEPATH) or systemErorr('Template config file does not exist');
+# Получаем данные конфига сообщение
+$MESSAGE = $simple->XMLin(MESSAGEPATH) or systemErorr('Template config file does not exist');
 
 1;

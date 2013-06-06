@@ -52,6 +52,12 @@ Method: T
 sub T { $Tatooine::Conf::TPL }
 
 =nd
+Method: M
+	Метод доступа к конфигу шаблонов
+=cut
+sub M { $Tatooine::Conf::MESSAGE }
+
+=nd
 Method: table
 	Метод доступа к названию таблицы, с которой работает модуль
 =cut
