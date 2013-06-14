@@ -42,6 +42,15 @@ sub registerActions {
 
 			# Получаем список записей
 			$S->F->{list} = $self->mO->getList;
+			
+		    # Получаем количество записей
+			$S->F->{count_record} =  $self->getRecord(
+				{
+					fields      => 'count(*)',
+					table       => $self->{db}->{table},
+					flow_type   => 'array'
+				}
+			);
 
 			$self->mO->setTpl('CONTENT');
 			return 'STOP';
