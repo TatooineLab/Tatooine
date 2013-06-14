@@ -352,6 +352,7 @@ sub getList {
 			fields => $options->{fields} || '*',
 			order => $options->{order} || $self->mO->{db}{default_order} || 'id',
 			where => $options->{where},
+			limit => $self->mO->{db}{default_limit} || '',
 			flow_type => $options->{flow_type} || 'hashref_array'
 		}
 	);
