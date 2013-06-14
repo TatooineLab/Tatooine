@@ -200,6 +200,8 @@ sub getRecord {
 	$query .= ' ORDER BY '.$sql->{order}	if ($sql->{order});
 	# Добавляем LIMIT
 	$query .= ' LIMIT '.$sql->{limit}		if ($sql->{limit});
+	# Добавляем OFFSET
+	$query .= ' OFFSET '.$sql->{offset}		if ($sql->{offset});
 	
 	my $sth = $self->{router}{dbh}->prepare($query);
 	# Выполняем запрос
@@ -343,17 +345,20 @@ Parameters:
 sub getList {
 	my ($self, $options) = @_;
 
-	$options = {} unless $options;
-	$options->{where} = {} unless $options->{where};
+	$options = {} 			unless $options;
+	$options->{where}  = {}	unless $options->{where};
+	$options->{limit}  = ''	unless $options->{limit};
+	$options->{offset} = ''	unless $options->{offset};
 
 	# Получаем список записей
 	$self->{list} = $self->getRecord(
 		{
-			fields => $options->{fields} || '*',
-			order => $options->{order} || $self->mO->{db}{default_order} || 'id',
-			where => $options->{where},
-			limit => $self->mO->{db}{default_limit} || '',
-			flow_type => $options->{flow_type} || 'hashref_array'
+			fields 		=> $options->{fields} || '*',
+			order		=> $options->{order} || $self->mO->{db}{default_order} || 'id',
+			where 		=> $options->{where},
+			limit		=> $options->{limit} || $self->mO->{db}{default_limit} || '',
+			offset		=> $options->{offset},
+			flow_type	=> $options->{flow_type} || 'hashref_array'
 		}
 	);
 }

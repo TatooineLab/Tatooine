@@ -39,9 +39,9 @@ sub registerActions {
 			if (!$S->dbh or !$S->dbh->ping) {
 				$self->mO->connectDB;
 			}
-
+			
 			# Получаем список записей
-			$S->F->{list} = $self->mO->getList;
+			$S->F->{list} = $self->mO->getList($S->F);
 			
 		    # Получаем количество записей
 			$S->F->{count_record} =  $self->getRecord(
