@@ -192,14 +192,14 @@ sub getRecord {
 	# sql-запрос
 	my $query = qq{ SELECT $sql->{fields} FROM $sql->{table} $where_fields};
 
-	# Добавляем ORDER
-	$query .= ' ORDER BY '.$sql->{order}	if ($sql->{order});
-	# Добавляем LIMIT
-	$query .= ' LIMIT '.$sql->{limit}		if ($sql->{limit});
 	# Добавляем GROUP BY
 	$query .= ' GROUP BY '.$sql->{group_by}	if ($sql->{group_by});
 	# Добавляем HAVING
 	$query .= ' '.$having_fields;
+	# Добавляем ORDER
+	$query .= ' ORDER BY '.$sql->{order}	if ($sql->{order});
+	# Добавляем LIMIT
+	$query .= ' LIMIT '.$sql->{limit}		if ($sql->{limit});
 	
 	my $sth = $self->{router}{dbh}->prepare($query);
 	# Выполняем запрос
