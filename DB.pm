@@ -202,7 +202,7 @@ sub getRecord {
 	$query .= ' LIMIT '.$sql->{limit}		if ($sql->{limit});
 	# Добавляем OFFSET
 	$query .= ' OFFSET '.$sql->{offset}		if ($sql->{offset});
-	
+
 	my $sth = $self->{router}{dbh}->prepare($query);
 	# Выполняем запрос
 	$sth->execute(@bind_values) or systemError("can't execute $query");
@@ -255,9 +255,11 @@ sub _serializeCondition {
 			if (@tmp > 0) {
 				if ($sql->{$field}{$_}{union}) {
 					push @tmp, $sql->{$field}{$_}{union};
-				} else {
+				} elsif (@tmp > 0) {
 					push @tmp, 'AND';
 				}
+			} elsif (@tmp > 0) {
+				push @tmp, 'AND';
 			}
 			push @tmp, "to_tsvector('english', ".$key.") @@ to_tsquery(?)" ;
 			push @bind_values, $val;
@@ -270,7 +272,14 @@ sub _serializeCondition {
 			# Если присутствует поле key в хеше, то заменяем текущий ключ
 			$key = $sql->{$field}{$_}{key} if $sql->{$field}{$_}{key};
 
-			if (@tmp > 0) {
+			# Объединение
+			if (@tmp > 0 and ref $sql->{$field}{$_} eq 'HASH') {
+				if ($sql->{$field}{$_}{union}) {
+					push @tmp, $sql->{$field}{$_}{union};
+				} elsif (@tmp > 0) {
+					push @tmp, 'AND';
+				}
+			}elsif (@tmp > 0) {
 				push @tmp, 'AND';
 			}
 
@@ -317,10 +326,28 @@ sub _serializeCondition {
 				}
 			}
 		} elsif ($sql->{$field}{$_} and $sql->{$field}{$_} eq 'IS NULL' or $sql->{$field}{$_} eq 'IS NOT NULL') {
-			push @tmp, 'AND' if @tmp > 0;
+			# Объединение
+			if (@tmp > 0 and ref $sql->{$field}{$_} eq 'HASH') {
+				if ($sql->{$field}{$_}{union}) {
+					push @tmp, $sql->{$field}{$_}{union};
+				} else {
+					push @tmp, 'AND';
+				}
+			} elsif (@tmp > 0) {
+				push @tmp, 'AND';
+			}
 			push @tmp, "$_ ".$sql->{$field}{$_};
 		} else {
-			push @tmp, 'AND' if @tmp > 0;
+			# Объединение
+			if (@tmp > 0 and ref $sql->{$field}{$_} eq 'HASH') {
+				if ($sql->{$field}{$_}{union}) {
+					push @tmp, $sql->{$field}{$_}{union};
+				} else {
+					push @tmp, 'AND';
+				}
+			} elsif (@tmp > 0) {
+				push @tmp, 'AND';
+			}
 			push @tmp, "$_=?" ;
 			push @bind_values, $sql->{$field}{$_};
 		}
