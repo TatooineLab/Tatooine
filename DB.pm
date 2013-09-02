@@ -10,6 +10,8 @@ use warnings;
 
 use utf8;
 
+use lib "../";
+
 use base qw / Tatooine::Base /;
 
 use Tatooine::Error;
@@ -385,7 +387,8 @@ sub getList {
 			where 		=> $options->{where},
 			limit		=> $options->{limit} || $self->mO->{db}{default_limit} || '',
 			offset		=> $options->{offset},
-			flow_type	=> $options->{flow_type} || 'hashref_array'
+			flow_type	=> $options->{flow_type} || 'hashref_array',
+			table		=> $options->{table} || $self->mO->{db}{table}
 		}
 	);
 }
