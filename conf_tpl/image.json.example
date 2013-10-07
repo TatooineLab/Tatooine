@@ -1,0 +1,18 @@
+{
+	/*
+		Array of sizes
+	*/
+	"MODULE_PREFIX" : [
+		{
+			/*
+				Width
+			*/
+			"w": 110, 
+
+			/*
+				Height
+			*/
+			"h": 97
+		}
+	]
+}

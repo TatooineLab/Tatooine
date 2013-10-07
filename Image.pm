@@ -18,6 +18,24 @@ use Image::Magick;		# ImageMagick is a software suite to create, edit, compose, 
 use Tatooine::Error;	# Class for handling errors.
 use JSON;
 
+=begin nd
+Constant: CONFPATH
+	Путь к глобльному конфигу проекта
+
+=cut
+
+# $INC[0] - содержит путь до папки lib. От нее идем к конфигурационным файлам
+use constant {
+	IMAGEPATH => $INC[1].'/../conf/image.json'
+};
+
+# Получаем данные конфига сообщений
+local $/;
+open( my $fh, '<', IMAGEPATH ) or systemError('Image config file does not exist');;
+my $json_text = <$fh>;
+my $IMAGE = decode_json( $json_text );
+close $fh;
+
 =nd
 Method: registerImageActions
 	The method of recording actions for the module.
@@ -274,7 +292,7 @@ sub imageUpload {
 
 	# File extension
 	my $ext = $name;
-	$ext =~ s/.*((png)|(gif)|(jpg))$/$1/gi;
+	$ext =~ s/.*((png)|(gif)|(jpg)|(jpeg))$/$1/gi;
 
 	# The name of the uploaded file
 	my $fname;
@@ -305,19 +323,13 @@ sub imageUpload {
 		# Upload the file to the server
 		$fname = $self->uploadFile($opt);
 
-		# Get image sizes from database
-		my $size = $self->getRecord({
-			table => 'image_setting',
-			flow_type => 'hashref_array'
-		});
-
 		# Resize images
-		foreach my $i (@{$size}) {
+		foreach my $i (@{$IMAGE->{$self->Prefix}}) {
 			$self->resizeImage({
 				picname => $fname,
 				size => {
-					width => $i->{width},
-					height => $i->{height}
+					width => $i->{w},
+					height => $i->{h}
 				}
 			});
 		}
