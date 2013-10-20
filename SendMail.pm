@@ -36,9 +36,15 @@ sub send_mail {
 		INTERPOLATE  => 0,
 		RELATIVE => 1
 	});
+	foreach my $k (keys %{$flow}) {
+		unless (ref $flow->{$k}) {
+			$flow->{$k} = Encode::encode("utf8", $flow->{$k});
+		}
+	}
 	$tt->process(Tatooine::Base::T->{mail}{$tpl}, $flow, \$data) or systemError('Template not found');
 	# Получаем сообщение
 	$subj = Encode::encode("utf8", Tatooine::Base::M->{mail}{$subj});
+
 	# Перекодируем данные в кодировку KOI8-R
 	Encode::from_to($subj, 'utf8', Tatooine::Base::C->{mail}{charset});
 	Encode::from_to($data, 'utf8', Tatooine::Base::C->{mail}{charset});
