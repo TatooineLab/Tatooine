@@ -116,7 +116,7 @@ sub out {
 			RELATIVE => 1,
 		#	RECURSION =>1,
 		});
-		$tt->process($self->{template}, $self->F) or systemError('Template not found');
+		$tt->process($self->{template}, $self->F) or systemError('Template not found '.$self->{template});
 	}
 };
 
