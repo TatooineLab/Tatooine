@@ -157,6 +157,8 @@ sub delete {
 			my $key = $_;
 			push @tmp, $key." ".$sign." ?" ;
 			push @bind_values, $val;
+		} elsif ( $where->{$_} and ($where->{$_} eq 'IS NULL' or $where->{$_} eq 'IS NOT NULL')) {
+			push @tmp, "$_ ".$where->{$_};
 		} else {
 			push @tmp, "$_=?" ;
 			push @bind_values, $where->{$_};
