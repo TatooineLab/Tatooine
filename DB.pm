@@ -327,7 +327,7 @@ sub _serializeCondition {
 					push @bind_values, $val;
 				}
 			}
-		} elsif ($sql->{$field}{$_} and $sql->{$field}{$_} eq 'IS NULL' or $sql->{$field}{$_} eq 'IS NOT NULL') {
+		} elsif ($sql->{$field}{$_} and ($sql->{$field}{$_} eq 'IS NULL' or $sql->{$field}{$_} eq 'IS NOT NULL')) {
 			# Объединение
 			if (@tmp > 0 and ref $sql->{$field}{$_} eq 'HASH') {
 				if ($sql->{$field}{$_}{union}) {
