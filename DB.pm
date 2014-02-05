@@ -142,38 +142,22 @@ Parameters:
 =cut
 sub delete {
 	my ($self, $where, $table) = @_;
-	my (@bind_values, $where_fields, @tmp);
+	my $query;
 
 	#SQL запрос
 	# Получаем таблицы
 	$table = $self->table unless $table;
 
 	# Условия удаления
-	foreach (keys %{$where}) {
-		# Если переменная имеет знак, отличный от '='
-		if ( ref $where->{$_} eq 'HASH' and $where->{$_}{sign} ){
-			my $sign = $where->{$_}{sign};
-			my $val = $where->{$_}{value};
-			my $key = $_;
-			push @tmp, $key." ".$sign." ?" ;
-			push @bind_values, $val;
-		} elsif ( $where->{$_} and ($where->{$_} eq 'IS NULL' or $where->{$_} eq 'IS NOT NULL')) {
-			push @tmp, "$_ ".$where->{$_};
-		} else {
-			push @tmp, "$_=?" ;
-			push @bind_values, $where->{$_};
-		}
-	}
-	$where_fields = join(' AND ', @tmp);
+	my ($where_fields, @bind_values) = _serializeCondition({ 'where' => $where }, 'where');
+
 	unless($where_fields){
 		$where_fields = 'WHERE id=?';
 		push @bind_values, $self->{router}->F->{id};
-	} else {
-		$where_fields = 'WHERE '.$where_fields;
 	}
 
 	# Запрос
-	my $query = qq{DELETE FROM $table $where_fields};
+	$query = qq{DELETE FROM $table $where_fields};
 	#Удаляем запись
 	$self->{router}{dbh}->do($query, undef, @bind_values) or systemError("can't execute $query");
 }
