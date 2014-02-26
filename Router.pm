@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use utf8;
+use bytes;
 
 use CGI;
 use CGI::Fast;
@@ -117,7 +118,9 @@ sub out {
 			ENCODING => 'utf8',
 		#	RECURSION =>1,
 		});
-		$tt->process($self->{template}, $self->F) or systemError('Template not found '.$self->{template});
+		my $data;
+		$tt->process($self->{template}, $self->F, \$data) or systemError('Template not found '.$self->{template});
+		print $data;
 	}
 };
 
