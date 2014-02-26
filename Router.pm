@@ -114,6 +114,7 @@ sub out {
 			INCLUDE_PATH => "$ENV{ DOCUMENT_ROOT }/../template/",
 			INTERPOLATE  => 0,
 			RELATIVE => 1,
+			ENCODING => 'utf8',
 		#	RECURSION =>1,
 		});
 		$tt->process($self->{template}, $self->F) or systemError('Template not found '.$self->{template});
