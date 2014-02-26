@@ -9,7 +9,6 @@ use strict;
 use warnings;
 use utf8;
 
-#use Net::SMTP;
 use MIME::Base64;
 use Encode;		# модуль для перекодирования строк
 use MIME::Lite;
@@ -34,16 +33,14 @@ sub send_mail {
 	my $tt = Template->new({
 		INCLUDE_PATH => "$ENV{ DOCUMENT_ROOT }/../template/",
 		INTERPOLATE  => 0,
-		RELATIVE => 1
+		RELATIVE => 1,
+		ENCODING => 'utf8',
 	});
-	foreach my $k (keys %{$flow}) {
-		unless (ref $flow->{$k}) {
-			$flow->{$k} = Encode::encode("utf8", $flow->{$k});
-		}
-	}
 	$tt->process(Tatooine::Base::T->{mail}{$tpl}, $flow, \$data) or systemError('Template not found');
+	
 	# Получаем сообщение
 	$subj = Encode::encode("utf8", Tatooine::Base::M->{mail}{$subj});
+	$data = Encode::encode("utf8", $data);
 
 	# Перекодируем данные в кодировку KOI8-R
 	Encode::from_to($subj, 'utf8', Tatooine::Base::C->{mail}{charset});
