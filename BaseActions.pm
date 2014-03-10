@@ -104,7 +104,7 @@ sub registerActions {
 
 				# Присваиваем значения undef пустым строкам
 				foreach my $key (keys %fields){
-					$fields{$key} = undef unless $fields{$key};
+					$fields{$key} = undef if (!$fields{$key} and $fields{$key} ne '0');
 				}
 
 				# Редактирование записи
