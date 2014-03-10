@@ -276,8 +276,10 @@ sub _serializeCondition {
 				# Формируем текст параметра запроса (ex. NOT IN (?, ?, ?))
 				my $str = $key." ".$sign." (";
 				# Количество ? соответствует количеству значений $val
+				my $j = 0;
 				foreach my $i (@{$val}) {
-					$str .= ($i ne $$val[-1]) ? '?,' : '?';
+					$str .= ($j != $#{$val}) ? '?,' : '?';
+					$j++;
 				}
 				$str .= ')';
 
@@ -289,7 +291,7 @@ sub _serializeCondition {
 				my $n = 0;
 				foreach my $i (@{$val}) {
 					if ($n > 0) {
-						push @tmp, $sql->{$field}{$_}{union};
+						push @tmp, $i->{union} ? $i->{union} : $sql->{$field}{$_}{union};
 					}
 
 					my $k = $i->{key};
