@@ -91,8 +91,10 @@ sub registerImageActions {
 			# Если запись редактируется
 			if ($S->F->{id} and $S->F->{id} ne 'undefined'){
 				$S->F->{data} = $self->mO->getRecord({
+					table => $self->mO->{db}{image_table},
 					where => {
-						id => $S->F->{id}
+						id => $S->F->{id},
+						tbl => $self->mO->{db}{table}
 					}
 				});
 			}
@@ -119,20 +121,57 @@ sub registerImageActions {
 				# Получаем список параметров новой записи
 				my %fields = %{$S->F};
 				# Удаляем ненужные параметры
-				delete @fields{qw(id save)};
+				delete @fields{qw(id save image_save)};
 
 				# Присваиваем значения undef пустым строкам
 				foreach my $key (keys %fields){
-					$fields{$key} = undef unless $fields{$key};
+					$fields{$key} = undef unless defined $fields{$key};
 				}
 
 				# Редактирование записи
 				if($S->F->{id}){
 					my %where_field = ('id' => $S->F->{id});
-					$self->mO->update(\%fields, \%where_field);
+					$self->mO->update(\%fields, \%where_field, $self->mO->{db}{image_table});
 				# Добавление записи
 				} else {
-					$self->mO->insert(\%fields);
+					$S->F->{id} = $self->mO->insert(\%fields, $self->mO->{db}{image_table}, 'id');
+				}
+
+				## Переименовываем все файлы изображения на новое имя
+				if ($S->F->{title} and $S->F->{id}) {
+					# Получаем информацию об изображении
+					my $img = $self->mO->getRecord({
+						table => $self->mO->{db}{image_table},
+						where => {
+							id => $S->F->{id},
+							tbl => $self->mO->{db}{table}
+						}
+					});
+
+					my $old_name = $img->{id_record} . '_' . $img->{id};
+					my $path = $self->mO->filePath;
+
+					# Список файлов изображения
+					my @files = `ls $path | grep ${old_name}`;
+					my $title = $S->F->{title};
+					my $new_name;
+
+					foreach my $f (@files) {
+						chop $f;
+						
+						my $name = $f;
+						
+						$name =~ s/.*(${old_name}.*)/$1/;
+						$new_name = $title . '_' . $name;
+
+						if ($f ne $new_name) {
+							# Переименовываем файл
+							my $old_path = $path.$f;
+							my $new_path = $path.$new_name;
+
+							`mv "${old_path}" "${new_path}"`;
+						}
+					}
 				}
 
 				# Формируем сообщение
@@ -259,12 +298,13 @@ sub getImageList {
 	$self->R->F->{path} = $self->{file}{path};
 
 	$self->getRecord({
-			table => $self->tableImage,
-			where => {
-				id_record => $id,
-				tbl => $table
-			},
-			flow_type => 'hashref_array'
+		table => $self->tableImage,
+		where => {
+			id_record => $id,
+			tbl => $table
+		},
+		flow_type => 'hashref_array',
+		order => 'sort, id DESC'
 	});
 }
 
