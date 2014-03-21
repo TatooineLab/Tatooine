@@ -138,7 +138,7 @@ sub registerImageActions {
 				}
 
 				## Переименовываем все файлы изображения на новое имя
-				if ($S->F->{title} and $S->F->{id}) {
+				if ($S->F->{id}) {
 					# Получаем информацию об изображении
 					my $img = $self->mO->getRecord({
 						table => $self->mO->{db}{image_table},
@@ -162,7 +162,7 @@ sub registerImageActions {
 						my $name = $f;
 						
 						$name =~ s/.*(${old_name}.*)/$1/;
-						$new_name = $title . '_' . $name;
+						$new_name = $title ? $title . '_' . $name : $name;
 
 						if ($f ne $new_name) {
 							# Переименовываем файл
@@ -395,8 +395,8 @@ sub imageDelete {
 	# Удаляем файлы из каталога
 	my $fname = $opt->{id_record}.'_'.$opt->{id};
 	my $path = $opt->{path};
-	`rm "$path${fname}."*`;
-	`rm "$path${fname}_"*`;
+	`rm "$path"*"${fname}."*`;
+	`rm "$path"*"${fname}_"*`;
 }
 
 =nd

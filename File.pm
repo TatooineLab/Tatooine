@@ -37,8 +37,8 @@ sub uploadFile {
 	$path = $self->filePath() unless $path;
 
 	# Get the file extension
-	my ($file_extension) = $input_file =~ m#([^\\/:]+)$#;
-	$file_extension =~ s/[^.]+\.(.*)/$1/gi;
+	my ($file_extension) = $input_file =~ m#([^.]+)$#;
+	$file_extension =~ /\.([^.]+)$/gi;
 
 	unless ($file_name){
 		$file_name = $input_file;
