@@ -8,6 +8,7 @@ Package: SendRequest
 use strict;
 use warnings;
 use utf8;
+use bytes;
 
 use MIME::Base64;
 use Encode;		# модуль для перекодирования строк
@@ -38,21 +39,20 @@ sub send_mail {
 	});
 	$tt->process(Tatooine::Base::T->{mail}{$tpl}, $flow, \$data) or systemError('Template not found');
 	
-	# Получаем сообщение
-	$subj = Encode::encode("utf8", Tatooine::Base::M->{mail}{$subj});
-	$data = Encode::encode("utf8", $data);
+	# Заголовок письма
+	$subj = Tatooine::Base::M->{mail}{$subj};
 
-	# Перекодируем данные в кодировку KOI8-R
-	Encode::from_to($subj, 'utf8', Tatooine::Base::C->{mail}{charset});
+	# Перекодируем данные в нужную кодировку
+	$data = Encode::encode("utf8", $data);
 	Encode::from_to($data, 'utf8', Tatooine::Base::C->{mail}{charset});
 
 	# Объект MIME::Lite
 	my $msg = MIME::Lite->new(
-			To      => $flow->{email},
-			From 	=> Tatooine::Base::C->{mail}{from},
-			Subject => $subj,
-			Type    => 'HTML',
-			Data    => $data
+		To      => $flow->{email},
+		From 	=> Tatooine::Base::C->{mail}{from},
+		Subject => $subj,
+		Type    => 'HTML',
+		Data    => $data
 	);
 	
 	# Кодировка письма
