@@ -249,7 +249,9 @@ sub _serializeCondition {
 			} elsif (@tmp > 0) {
 				push @tmp, 'AND';
 			}
-			push @tmp, "to_tsvector('english', ".$key.") @@ to_tsquery(?)" ;
+			my $dictinary = 'english';
+			$dictinary = $sql->{$field}{$_}{dictinary} if $sql->{$field}{$_}{dictinary};
+			push @tmp, "to_tsvector('$dictinary', ".$key.") @@ to_tsquery(?)" ;
 			push @bind_values, $val;
 		# Если переменная имеет параметр value
 		} elsif ( ref $sql->{$field}{$_} eq 'HASH' and ($sql->{$field}{$_}{value} or $sql->{$field}{$_}{value} == 0 or $sql->{$field}{$_}{sign})){
