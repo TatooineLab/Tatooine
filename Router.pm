@@ -81,7 +81,7 @@ sub listen {
 	while ($self->CGI(CGI::Fast->new)) {
 		$CGI::PARAM_UTF8 = 1;
 		for my $name ($self->CGI->param) {
-			if($name =~ /arr/) {
+			if($name =~ /^arr_/) {
 				push @{$self->{flow}{$name}}, $self->CGI->param($name);
 			} else {
 				$self->{flow}{$name} = $self->CGI->param($name)
