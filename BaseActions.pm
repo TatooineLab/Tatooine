@@ -39,6 +39,10 @@ sub registerActions {
 			if (!$S->dbh or !$S->dbh->ping) {
 				$self->mO->connectDB;
 			}
+
+			## Получаем offset
+			$S->F->{limit} = $self->mO->{db}{default_limit} if !$S->F->{limit};
+			$S->F->{offset} = $S->F->{limit} * $S->F->{offset} - $S->F->{limit} if $S->F->{offset};
 			
 			# Получаем список записей
 			$S->F->{list} = $self->mO->getList($S->F);
