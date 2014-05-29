@@ -375,7 +375,7 @@ sub getList {
 			fields 		=> $options->{fields} || '*',
 			order		=> $options->{order} || $self->mO->{db}{default_order} || 'id',
 			where 		=> $options->{where},
-			limit		=> $options->{limit} || $self->mO->{db}{default_limit} || '',
+			limit		=> $options->{limit} || '',
 			offset		=> $options->{offset},
 			flow_type	=> $options->{flow_type} || 'hashref_array',
 			table		=> $options->{table} || $self->mO->{db}{table}
