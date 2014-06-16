@@ -111,6 +111,7 @@ sub registerFileActions {
 			# Если запись редактируется
 			if ($S->F->{id} and $S->F->{id} ne 'undefined'){
 				$S->F->{data} = $self->mO->getRecord({
+					table => $self->mO->{db}{file_table},
 					where => {
 						id => $S->F->{id}
 					}
@@ -139,20 +140,20 @@ sub registerFileActions {
 				# Получаем список параметров новой записи
 				my %fields = %{$S->F};
 				# Удаляем ненужные параметры
-				delete @fields{qw(id save)};
+				delete @fields{qw(id save file_save)};
 
 				# Присваиваем значения undef пустым строкам
 				foreach my $key (keys %fields){
-					$fields{$key} = undef unless $fields{$key};
+					$fields{$key} = undef if (!$fields{$key} and $fields{$key} ne '0');
 				}
 
 				# Редактирование записи
 				if($S->F->{id}){
 					my %where_field = ('id' => $S->F->{id});
-					$self->mO->update(\%fields, \%where_field);
+					$self->mO->update(\%fields, \%where_field, $self->mO->{db}{file_table});
 				# Добавление записи
 				} else {
-					$self->mO->insert(\%fields);
+					$self->mO->insert(\%fields, $self->mO->{db}{file_table});
 				}
 
 				# Формируем сообщение
