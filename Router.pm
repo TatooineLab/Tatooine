@@ -119,7 +119,7 @@ sub out {
 		#	RECURSION =>1,
 		});
 		my $data;
-		$tt->process($self->{template}, $self->F, \$data) or systemError('Template not found '.$self->{template});
+		$tt->process($self->{template}, $self->F, \$data) or systemError($tt->error());
 		print $data;
 	}
 };
