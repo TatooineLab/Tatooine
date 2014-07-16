@@ -436,6 +436,7 @@ sub resizeImage {
 	$x = $image->Read($path.$picname);
 	# определяем ширину и высоту изображения
 	my ($ox,$oy) = $image->Get('base-columns','base-rows');
+	return 0 if (!$ox || !$oy);
 
 	my ($prop_x, $prop_y, $nnx, $nny);
 	# Пропорционально увеличиваем высоту и ширину, если картинка маленькая
