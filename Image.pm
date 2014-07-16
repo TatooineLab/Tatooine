@@ -423,7 +423,7 @@ sub resizeImage {
 
 	# File extension
 	my $ext=$picname;
-	$ext =~s /.*((png)|(gif)|(jpg))$/$1/gi;
+	$ext =~s /.*((png)|(gif)|(jpg)|(jpeg))$/$1/gi;
 
 	# File name
 	my $fname = $picname;
