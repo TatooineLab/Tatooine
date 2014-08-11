@@ -231,8 +231,10 @@ sub _serializeCondition {
 	my ($sql, $field) = @_;
 	# Разбираем WHERE
 	my (@bind_values, $where_fields, $order, @tmp);
+	
 	foreach (keys %{$sql->{$field}}) {
 		next unless exists($sql->{$field}{$_});
+		warn 'Undefined value '.$_ if ref $sql->{$field}{$_} eq 'HASH' and !defined $sql->{$field}{$_}{value};
 		# Полнотекстовый поиск
 		if ( ref $sql->{$field}{$_} eq 'HASH' and $sql->{$field}{$_}{tsearch} and $sql->{$field}{$_}{sign} ){
 			my $val = join(' '.$sql->{$field}{$_}{sign}.' ', split(' ', $sql->{$field}{$_}{value}));
@@ -310,7 +312,7 @@ sub _serializeCondition {
 				}
 				push @tmp, ')';
 			} else {
-				if ($val eq 'IS NULL' or $val eq 'IS NOT NULL') {
+				if ($val and ($val eq 'IS NULL' or $val eq 'IS NOT NULL')) {
 					push @tmp, $key." ".$val;
 				} else {
 					push @tmp, $key." ".$sign." ?" ;
