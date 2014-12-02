@@ -176,7 +176,11 @@ See Also:
 =cut
 sub RA {
 	my ($self, $name) = @_;
-	$self->{action}{$name}{do}->($self);
+	if ($self->{action}{$name}) {
+		$self->{action}{$name}{do}->($self);
+	} else {
+		warn "Script does not have action $name";
+	}
 }
 
 =nd
