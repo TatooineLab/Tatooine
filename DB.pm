@@ -255,7 +255,7 @@ sub _serializeCondition {
             push @tmp, "to_tsvector('$dictionary', ".$key.") @@ to_tsquery(?)" ;
             push @bind_values, $val;
         # Если переменная имеет параметр value
-        } elsif ( ref $sql->{$field}{$_} eq 'HASH' and ($sql->{$field}{$_}{value} or $sql->{$field}{$_}{value} == 0 or $sql->{$field}{$_}{sign})){
+        } elsif ( ref $sql->{$field}{$_} eq 'HASH' and ($sql->{$field}{$_}{value} or $sql->{$field}{$_}{value} eq '0' or $sql->{$field}{$_}{sign})){
             my $sign = $sql->{$field}{$_}{sign};
             $sign = '=' unless $sign;
             my $val = $sql->{$field}{$_}{value};
@@ -318,7 +318,7 @@ sub _serializeCondition {
                 }
                 push @tmp, ')';
             } else {
-                if ($val eq 'IS NULL' or $val eq 'IS NOT NULL') {
+                if ($val and $val eq 'IS NULL' or $val eq 'IS NOT NULL') {
                     push @tmp, $key." ".$val;
                 } else {
                     push @tmp, $key." ".$sign." ?" ;
