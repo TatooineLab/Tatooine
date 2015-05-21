@@ -48,7 +48,7 @@ sub connectDB {
     my $self = shift;
     if (!$self->R->dbh or !$self->R->dbh->ping) {
         my $data_source = "dbi:Pg:database=$self->{db}{database};host=$self->{db}{host};port=$self->{db}{port}";
-        $self->R->{dbh} = DBI->connect($data_source, $self->{db}{login}, $self->{db}{pass}) or systemError('Can not connect to database');
+        $self->R->{dbh} = DBI->connect($data_source, $self->{db}{login}, $self->{db}{pass}, ,{ pg_enable_utf8 => 1 }) or systemError('Can not connect to database');
     }
 }
 
