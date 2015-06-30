@@ -93,7 +93,7 @@ sub registerImageActions {
 				$S->F->{data} = $self->mO->getRecord({
 					table => $self->mO->{db}{image_table},
 					where => {
-						id => $S->F->{id},
+						id  => $S->F->{id},
 						tbl => $self->mO->{db}{table}
 					}
 				});
@@ -143,7 +143,7 @@ sub registerImageActions {
 					my $img = $self->mO->getRecord({
 						table => $self->mO->{db}{image_table},
 						where => {
-							id => $S->F->{id},
+							id  => $S->F->{id},
 							tbl => $self->mO->{db}{table}
 						}
 					});
@@ -158,9 +158,9 @@ sub registerImageActions {
 
 					foreach my $f (@files) {
 						chop $f;
-						
+
 						my $name = $f;
-						
+
 						$name =~ s/.*(${old_name}.*)/$1/;
 						$new_name = $title ? $title . '_' . $name : $name;
 
@@ -213,9 +213,9 @@ sub registerImageActions {
 
 				# Delete image from path
 				$self->mO->imageDelete({
-					id => $img->{id},
+					id        => $img->{id},
 					id_record => $img->{id_record},
-					path => $self->filePath
+					path      => $self->filePath
 				}) if $img;
 
 				# Формируем сообщение
@@ -245,14 +245,13 @@ sub selectImageActions {
 	my $R = $self->{router};
 	my @act;
 
-	push @act, $self->Prefix.'_IMAGE_MAIN'			if $R->F->{image_main};
-	push @act, $self->Prefix.'_IMAGE_UPLOAD'		if $R->F->{image_upload};
-	push @act, $self->Prefix.'_IMAGE_LIST'			if $R->F->{image_list};
-	push @act, $self->Prefix.'_IMAGE_WND_DELETE' 	if $R->F->{image_wnd_delete};
-	push @act, $self->Prefix.'_IMAGE_DELETE' 		if $R->F->{image_delete};
-
-	push @act, $self->Prefix.'_IMAGE_FORM'			if $R->F->{image_form};
-	push @act, $self->Prefix.'_IMAGE_SAVE'			if $R->F->{image_save};
+	push @act, $self->Prefix.'_IMAGE_MAIN'       if $R->F->{image_main};
+	push @act, $self->Prefix.'_IMAGE_UPLOAD'     if $R->F->{image_upload};
+	push @act, $self->Prefix.'_IMAGE_LIST'       if $R->F->{image_list};
+	push @act, $self->Prefix.'_IMAGE_WND_DELETE' if $R->F->{image_wnd_delete};
+	push @act, $self->Prefix.'_IMAGE_DELETE'     if $R->F->{image_delete};
+	push @act, $self->Prefix.'_IMAGE_FORM'       if $R->F->{image_form};
+	push @act, $self->Prefix.'_IMAGE_SAVE'       if $R->F->{image_save};
 
 	return @act;
 }
@@ -301,7 +300,7 @@ sub getImageList {
 		table => $self->tableImage,
 		where => {
 			id_record => $id,
-			tbl => $table
+			tbl       => $table
 		},
 		flow_type => 'hashref_array',
 		order => 'sort, id DESC'
@@ -348,9 +347,9 @@ sub imageUpload {
 		my $id = $self->insert(
 			{
 				id_record => $opt->{id_record},
-				tbl => $opt->{table},
-				ext => $ext,
-				sort => $opt->{sort},
+				tbl       => $opt->{table},
+				ext       => $ext,
+				sort      => $opt->{sort},
 				file_size => -s $opt->{file}
 			},
 			$self->tableImage,
@@ -368,8 +367,9 @@ sub imageUpload {
 			$self->resizeImage({
 				picname => $fname,
 				size => {
-					width => $i->{w},
-					height => $i->{h}
+					width   => $i->{w},
+					height  => $i->{h},
+					postfix => $i->{postfix}
 				}
 			});
 		}
@@ -440,7 +440,7 @@ sub resizeImage {
 
 	my ($prop_x, $prop_y, $nnx, $nny);
 	# Пропорционально увеличиваем высоту и ширину, если картинка маленькая
-	if(defined $size->{height} and ($size->{width} > $ox or $size->{height} > $oy)) {
+	if (defined $size->{height} and defined $size->{width} and ($size->{width} > $ox or $size->{height} > $oy)) {
 		if($size->{width}>$ox){
 			$oy *= $size->{width}/$ox;
 			$ox = $size->{width};
@@ -471,7 +471,7 @@ sub resizeImage {
 			$image->Crop(width=>$prop_x, height=>$prop_y, x=>$nnx, y=>0);
 		}
 	# Пропорционально уменьшаем картинку, если она большая
-	} elsif (defined $size->{height}) {
+	} elsif (defined $size->{height} and defined $size->{width}) {
 		## Вычисляем пропорции
 		if ($size->{width} > $size->{height}) {
 			my $k = $ox / $size->{width};
@@ -519,10 +519,12 @@ sub resizeImage {
 		}
 		# Вырезаем изображение
 		$image->Resize(width=>int($size->{width}), height=>int($size->{height}));
-	} elsif ($size->{width} == 430) {
+	} elsif ( defined $size->{height}) {
+		my $w = $size->{height} * $ox / $oy;
+		$image->AdaptiveResize(width => int $w, height => $size->{height});
+	} elsif ( defined $size->{height}) {
 		my $h = $size->{width} / $ox * $oy;
 		$image->AdaptiveResize(width => $size->{width}, height => int $h);
-		$size->{height} = 340;
 	}
 	# Сохраняем изображение.
 	my $f;
@@ -530,8 +532,9 @@ sub resizeImage {
 		$x = $image->Write($path.$fname.".".$ext);
 		$f = $path.$fname.".".$ext;
 	} else {
-		$x = $image->Write($path.$fname."_".$size->{width}."x".$size->{height}.".".$ext);
-		$f = $path.$fname."_".$size->{width}."x".$size->{height}.".".$ext;
+		my $postfix = $size->{postfix} || ($size->{width}."x".$size->{height});
+		$x = $image->Write($path.$fname."_".$postfix.".".$ext);
+		$f = $path.$fname."_".$postfix.".".$ext;
 	}
 }
 
