@@ -440,7 +440,7 @@ sub resizeImage {
 
 	my ($prop_x, $prop_y, $nnx, $nny);
 	# Пропорционально увеличиваем высоту и ширину, если картинка маленькая
-	if($size->{width}>$ox or $size->{height}>$oy){
+	if(defined $size->{height} and ($size->{width} > $ox or $size->{height} > $oy)) {
 		if($size->{width}>$ox){
 			$oy *= $size->{width}/$ox;
 			$ox = $size->{width};
@@ -471,13 +471,13 @@ sub resizeImage {
 			$image->Crop(width=>$prop_x, height=>$prop_y, x=>$nnx, y=>0);
 		}
 	# Пропорционально уменьшаем картинку, если она большая
-	} else {
+	} elsif (defined $size->{height}) {
 		## Вычисляем пропорции
-		if($size->{width}>$size->{height}){
-			my $k = $ox/$size->{width};
+		if ($size->{width} > $size->{height}) {
+			my $k = $ox / $size->{width};
 
-			if($oy/$k < $size->{height}){
-				$k = $oy/$size->{height};
+			if ($oy / $k < $size->{height}){
+				$k = $oy / $size->{height};
 				$prop_x = $k * $size->{width};
 				$prop_y = $k * $size->{height};
 				# Вычисляем откуда нам резать по X
@@ -489,8 +489,8 @@ sub resizeImage {
 				$prop_y = $k * $size->{height};
 				$prop_x = $k * $size->{width};
 				# Вычисляем откуда нам резать по Y
-				$nnx=0;
-				$nny=int(($oy-$prop_y)/2);
+				$nnx = 0;
+				$nny = int (($oy-$prop_y)/2);
 				# Вырезаем изображение
 				$image->Crop(width=>$prop_x, height=>$prop_y, x=>$nnx, y=>0);
 			}
@@ -519,6 +519,10 @@ sub resizeImage {
 		}
 		# Вырезаем изображение
 		$image->Resize(width=>int($size->{width}), height=>int($size->{height}));
+	} elsif ($size->{width} == 430) {
+		my $h = $size->{width} / $ox * $oy;
+		$image->AdaptiveResize(width => $size->{width}, height => int $h);
+		$size->{height} = 340;
 	}
 	# Сохраняем изображение.
 	my $f;
