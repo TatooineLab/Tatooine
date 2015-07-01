@@ -369,7 +369,9 @@ sub imageUpload {
 				size => {
 					width   => $i->{w},
 					height  => $i->{h},
-					postfix => $i->{postfix}
+					postfix => $i->{postfix},
+					max_w   => $i->{max_w},
+					max_h   => $i->{max_h}
 				}
 			});
 		}
@@ -522,10 +524,24 @@ sub resizeImage {
 	} elsif ( defined $size->{height}) {
 		my $w = $size->{height} * $ox / $oy;
 		$image->AdaptiveResize(width => int $w, height => $size->{height});
-	} elsif ( defined $size->{height}) {
+	} elsif ( defined $size->{width}) {
+		warn $size->{width};
 		my $h = $size->{width} / $ox * $oy;
 		$image->AdaptiveResize(width => $size->{width}, height => int $h);
+	} elsif ( defined $size->{max_w} and defined $size->{max_h}) {
+		my ($h, $w);
+
+		$h = $size->{max_h};
+		$w = $h * $ox / $oy;
+
+		if ($w > $size->{max_w}) {
+			$w = $size->{max_w};
+			$h = $w / $ox * $oy
+		}
+
+		$image->AdaptiveResize(width => int $w, height => int $h);
 	}
+
 	# Сохраняем изображение.
 	my $f;
 	if ($param and $param eq 'edit'){
