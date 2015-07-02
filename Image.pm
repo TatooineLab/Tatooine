@@ -257,6 +257,12 @@ sub selectImageActions {
 }
 
 =nd
+Method: config
+	Метод доступа к конфигу с изображениями
+=cut
+sub config { $IMAGE }
+
+=nd
 Method: setImageTpl($name_tpl)
 	The method that sets the template.
 
@@ -523,11 +529,10 @@ sub resizeImage {
 		$image->Resize(width=>int($size->{width}), height=>int($size->{height}));
 	} elsif ( defined $size->{height}) {
 		my $w = $size->{height} * $ox / $oy;
-		$image->AdaptiveResize(width => int $w, height => $size->{height});
+		$image->Resize(width => int $w, height => $size->{height});
 	} elsif ( defined $size->{width}) {
-		warn $size->{width};
 		my $h = $size->{width} / $ox * $oy;
-		$image->AdaptiveResize(width => $size->{width}, height => int $h);
+		$image->Resize(width => $size->{width}, height => int $h);
 	} elsif ( defined $size->{max_w} and defined $size->{max_h}) {
 		my ($h, $w);
 
@@ -539,7 +544,7 @@ sub resizeImage {
 			$h = $w / $ox * $oy
 		}
 
-		$image->AdaptiveResize(width => int $w, height => int $h);
+		$image->Resize(width => int $w, height => int $h);
 	}
 
 	# Сохраняем изображение.
