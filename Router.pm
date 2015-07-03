@@ -108,9 +108,9 @@ Method: out
 =cut
 sub out {
 	my $self = shift;
-	print "Content-type: text/html; charset=UTF-8\n\n";
 	# Если шаблон задан, выставляем его.
-	if ($self->{template}) {	
+	if ($self->{template}) {
+		print "Content-type: text/html; charset=UTF-8\n\n";
 		my $tt = Template->new({
 			INCLUDE_PATH => "$ENV{ DOCUMENT_ROOT }/../template/",
 			INTERPOLATE  => 0,
