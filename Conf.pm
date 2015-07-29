@@ -17,15 +17,15 @@ use XML::Simple;
 
 =begin nd
 Constant: CONFPATH
-	Путь к глобльному конфигу проекта
+	Путь к глобальному конфигу проекта
 
 =cut
 
 # $INC[0] - содержит путь до папки lib. От нее идем к конфигурационным файлам
 use constant {
-	CONFPATH => $INC[0].'/../conf/global.xml',
-	TEMPLATEPATH => $INC[0].'/../conf/template.xml',
-	MESSAGEPATH => $INC[0].'/../conf/message.xml',
+	'CONFPATH'     => $INC[0].'/../conf/global.xml',
+	'TEMPLATEPATH' => $INC[0].'/../conf/template.xml',
+	'MESSAGEPATH'  => $INC[0].'/../conf/message.xml',
 };
 
 use vars qw/ $DATA $TPL $MESSAGE /;
@@ -33,10 +33,10 @@ use vars qw/ $DATA $TPL $MESSAGE /;
 # Читаем данные из конфига
 my $simple = XML::Simple->new();
 # Получаем данные глобального конфига
-$DATA = $simple->XMLin(CONFPATH) or systemErorr('Template config file does not exist');
+$DATA    = $simple->XMLin(CONFPATH) or systemError('Template config file does not exist');
 # Получаем данные конфига шаблонов
-$TPL = $simple->XMLin(TEMPLATEPATH) or systemErorr('Template config file does not exist');
+$TPL     = $simple->XMLin(TEMPLATEPATH) or systemError('Template config file does not exist');
 # Получаем данные конфига сообщение
-$MESSAGE = $simple->XMLin(MESSAGEPATH) or systemErorr('Template config file does not exist');
+$MESSAGE = $simple->XMLin(MESSAGEPATH) or systemError('Template config file does not exist');
 
 1;

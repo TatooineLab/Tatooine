@@ -10,8 +10,6 @@ use warnings;
 
 use utf8;
 
-use lib "../";
-
 use base qw / Tatooine::Base /;
 
 use Tatooine::Error;
@@ -352,10 +350,10 @@ sub _serializeCondition {
             push @bind_values, $sql->{$field}{$_};
         }
     }
-    
+
     $where_fields = join(' ', @tmp);
     $where_fields = $field.' '.$where_fields    if($where_fields);
-    
+
     return $where_fields, @bind_values;
 }
 =nd

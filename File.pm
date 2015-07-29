@@ -39,6 +39,7 @@ sub uploadFile {
 	# Get the file extension
 	my ($file_extension) = $input_file =~ m#([^.]+)$#;
 	$file_extension =~ /\.([^.]+)$/gi;
+	$file_extension = lc $file_extension;
 
 	unless ($file_name){
 		$file_name = $input_file;
@@ -46,12 +47,15 @@ sub uploadFile {
 	}
 	$file_name .= ".$file_extension" if $file_name;
 
-	open(OUT,">$path$file_name");
-	binmode(OUT, ':bytes');
-	while (<$input_file>) {
-		print OUT $_;
+	open(OUT,">$path$file_name") or systemError("Can't open filehandle: ".$!);
+
+	unless (checkErrors("SYSTEM")) {
+		binmode(OUT, ':bytes');
+		while (<$input_file>) {
+			print OUT $_;
+		}
+		close(OUT);
 	}
-	close(OUT);
 
 	return $file_name;
 }
