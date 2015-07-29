@@ -6,7 +6,7 @@ Package: Error
 =cut
 
 use strict;
-use warnings; 
+use warnings;
 
 use utf8;
 
@@ -32,7 +32,8 @@ See Also:
 =cut
 sub systemError {
 	my $error = shift;
-	warn "SYSTEM ERROR: ".$error;
+	my ($package, $filename, $line) = caller;
+	print STDERR "$error at $package $filename line $line";
 	push @system_errors, $error;
 }
 
@@ -51,7 +52,7 @@ sub userError {
 
 =nd
 Function: checkErrors()
-		Проверка стэков на наличие ошибок. 
+	Проверка стэков на наличие ошибок.
 
 Parameters:
 	SYSTEM - проверка системных ошибок(@system_errors)
@@ -99,7 +100,7 @@ sub regUserErrors {
 }
 =nd
 Function: clearErrors()
-		Очистка стека ошибок 
+		Очистка стека ошибок
 
 =cut
 # Проверка на наличие ошибок
