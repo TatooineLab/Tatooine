@@ -316,8 +316,9 @@ sub fileUpload {
 	my $name = $self->R->F->{'_files'};
 
 	# File extension
-	my $ext = $name;
-	$ext =~ s/\.([^.]+)$/$1/gi;
+	my ($ext) = $self->R->F->{files} =~ m#([^.]+)$#;
+	$ext =~ /\.([^.]+)$/gi;
+	$ext = lc $ext;
 
 	# The name of the uploaded file
 	my $fname;
