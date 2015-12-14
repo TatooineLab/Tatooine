@@ -317,7 +317,7 @@ sub fileUpload {
 
 	# File extension
 	my $ext = $name;
-	$ext =~ s/[^.]+\.(.*)/$1/gi;
+	$ext =~ s/\.([^.]+)$/$1/gi;
 
 	# The name of the uploaded file
 	my $fname;
