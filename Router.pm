@@ -16,6 +16,7 @@ use CGI;
 use CGI::Fast;
 use Template;
 use Tatooine::Error;
+use FindBin;
 
 =nd
 Method: new
@@ -25,6 +26,17 @@ sub new {
 	my ($class, $add_attr) = @_;
 	# Проверяем атрибуты потоска
 	$add_attr = {} unless $add_attr;
+
+	my $docroot_path = $FindBin::Bin;
+	$docroot_path =~ s/^(.*public_html).*/$1/;
+
+	my $tt = Template->new({
+		INCLUDE_PATH => $docroot_path."/../template/",
+		INTERPOLATE  => 0,
+		RELATIVE => 1,
+		ENCODING => 'utf8',
+	});
+
 	# Заполняем поля объекта
 	my $self = bless {
 		action 		=> {},		# Действия
@@ -34,6 +46,7 @@ sub new {
 		cgi		=> undef,	# Объект CGI
 		template	=> undef,	# Шаблон
 		dbh		=> undef,	# Дескриптор БД
+		tt => $tt,
 		%{$add_attr}			# Дополнительные атрибуты
 	}, $class;
 }
@@ -78,7 +91,7 @@ sub listen {
 # 	$self->R(new CGI);
 	#Вытаскиваем CGI
 #	$self->{flow}{$_} = $self->R->param($_) foreach $self->R->param;
-	while ($self->CGI(CGI::Fast->new)) {
+	while ($self->{cgi} = CGI::Fast->new) {
 		$CGI::PARAM_UTF8 = 1;
 		for my $name ($self->CGI->param) {
 			if($name =~ /^arr_/) {
@@ -87,9 +100,9 @@ sub listen {
 				$self->{flow}{$name} = $self->CGI->param($name)
 			}
 		}
-		#Получаем имя действие(я) которое(ые) нужно выполнить
+		# Получаем имя действие(я) которое(ые) нужно выполнить
 		push @{$self->{active_actions}}, $self->{select_actions}->($self);
-		#Выполняем действия
+		# Выполняем действия
 		while(my $name = $self->nextAction) {
 			warn $name;
 			# Выходим из цикла
@@ -111,15 +124,9 @@ sub out {
 	# Если шаблон задан, выставляем его.
 	if ($self->{template}) {
 		print "Content-type: text/html; charset=UTF-8\n\n";
-		my $tt = Template->new({
-			INCLUDE_PATH => "$ENV{ DOCUMENT_ROOT }/../template/",
-			INTERPOLATE  => 0,
-			RELATIVE => 1,
-			ENCODING => 'utf8',
-		#	RECURSION =>1,
-		});
+
 		my $data;
-		$tt->process($self->{template}, $self->F, \$data) or systemError($tt->error());
+		$self->{tt}->process($self->{template}, $self->F, \$data) or systemError($self->{tt}->error());
 		print $data;
 	}
 };
@@ -216,6 +223,10 @@ sub _clean {
 	if ($self->dbh and $self->dbh->ping) {
 		$self->dbh->disconnect or warn $self->dbh->errstr;
 	}
+
+	undef $self->{cgi};
+	undef $self->{dbh};
+	undef $self->{select_action};
 
 	# Чистим стек ошибок
 	clearErrors();
