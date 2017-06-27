@@ -83,14 +83,24 @@ sub nextAction {
 
 =nd
 Method: listen
-	Выполняет действия
+	В зависимости от конфигурации запускает listen либо для FCGI, либо для CGI
 =cut
 sub listen {
 	my $self = shift;
-	#Создаем обьект CGI
-# 	$self->R(new CGI);
-	#Вытаскиваем CGI
-#	$self->{flow}{$_} = $self->R->param($_) foreach $self->R->param;
+
+	if ($self->C->{server} and $self->C->{server} eq 'CGI') {
+		$self->listen_cgi;
+	} else {
+		$self->listen_fcgi;
+	}
+}
+
+=nd
+Method: listen_fcgi
+	Выполняет действия (для FastCGI)
+=cut
+sub listen_fcgi {
+	my $self = shift;
 	while ($self->{cgi} = CGI::Fast->new) {
 		$CGI::PARAM_UTF8 = 1;
 		for my $name ($self->CGI->param) {
@@ -112,6 +122,35 @@ sub listen {
 			}
 		}
 		$self->_clean;
+	}
+}
+
+=nd
+Method: listen_cgi
+	Выполняет действия (для CGI)
+=cut
+sub listen_cgi {
+	my $self = shift;
+	# Создаем обьект CGI
+	$self->CGI(new CGI);
+	for my $name ($self->CGI->param) {
+		$CGI::PARAM_UTF8 = 1;
+		if($name =~ /arr/) {
+			push @{$self->{flow}{$name}}, $self->CGI->param($name);
+		} else {
+			$self->{flow}{$name} = $self->CGI->param($name)
+		}
+	}
+	#Получаем имя действие(я) которое(ые) нужно выполнить
+	push @{$self->{active_actions}}, $self->{select_actions}->($self);
+	#Выполняем действия
+ 	while(my $name = $self->nextAction) {
+		warn $name;
+		# Выходим из цикла
+		if($self->RA($name) eq 'STOP') {
+			$self->out;
+			last;
+		}
 	}
 }
 
