@@ -133,9 +133,9 @@ sub listen_cgi {
 	my $self = shift;
 	# Создаем обьект CGI
 	$self->CGI(new CGI);
-	for my $name ($self->CGI->param) {
-		$CGI::PARAM_UTF8 = 1;
-		if($name =~ /arr/) {
+	$CGI::PARAM_UTF8 = 1;
+	for my $name ($self->CGI->param) {	
+		if($name =~ /^arr_/) {
 			push @{$self->{flow}{$name}}, $self->CGI->param($name);
 		} else {
 			$self->{flow}{$name} = $self->CGI->param($name)
